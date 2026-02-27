@@ -30,13 +30,15 @@ Python 3.6 или выше
 Установка и запуск
 Клонируйте репозиторий:
 
-bash
+```bash
 git clone https://github.com/yourusername/solar-system-simulation.git
 cd solar-system-simulation
+```
 Установите зависимости:
 
-bash
+```bash
 pip install Pillow
+```
 Поместите изображения планет в папку images (необязательно).
 Ожидаемые имена файлов:
 sun.png, mercury.png, venus.png, earth.png, mars.png, jupiter.png, saturn.png, uranus.png, neptune.png, pluto.png, moon.png.
