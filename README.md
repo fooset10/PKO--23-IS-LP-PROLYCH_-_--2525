@@ -95,7 +95,7 @@ https://screenshot.png
 Этот проект распространяется под лицензией MIT. Вы можете свободно использовать и изменять код.
 
 Автор: ```Пролыгин Максим Алексеевич 23ИСД```
-Дата: 2026
+Дата: 27.02.2026
 
 <img width="1920" height="1080" alt="2026-02-27_14-00-27" src="https://github.com/user-attachments/assets/e80fcf45-f5cb-45ef-8ffc-9be9995c3baa" />
 <img width="1920" height="1080" alt="2026-02-27_13-54-18" src="https://github.com/user-attachments/assets/31d33387-19f2-48ed-b416-7f7a0e824090" />
