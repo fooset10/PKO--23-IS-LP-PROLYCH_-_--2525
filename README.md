@@ -73,4 +73,5 @@ python sgshsh.py
 <img width="1920" height="1080" alt="2026-02-27_14-00-27" src="https://github.com/user-attachments/assets/0c559595-36c1-4238-8651-21fd5650c93e" />
 <img width="1920" height="1080" alt="2026-02-27_13-54-18" src="https://github.com/user-attachments/assets/c9faa094-296c-43cd-98bb-f85f4505f127" />
 <img width="1920" height="1080" alt="2026-02-27_13-57-56" src="https://github.com/user-attachments/assets/906bf8c9-7c46-4d44-b760-7fda12431ef0" />
+ Автор: ```Пролыгин Максим Алексеевич 23ИСД```
 
