@@ -67,7 +67,11 @@ python sgshsh.py
 ● Клик по объекту: Откроет модальное окно с характеристиками планеты.
 
 📸 Скриншоты
-Вот так это выглядит в работе. Добавьте сюда свои реальные скриншоты!
+Вот так это выглядит в работе.<img width="1920" height="1080" alt="2026-02-27_13-54-18" src="https://github.com/user-attachments/assets/3447457e-84d1-4770-8035-8391c75bd981" />
+<img width="1920" height="1080" alt="2026-02-27_13-54-18" src="https://github.com/user-attachments/assets/3447457e-84d1-4770-8035-8391c75bd981" />
+<img width="1920" height="1080" alt="2026-02-27_13-57-56" src="https://github.com/user-attachments/assets/ebb2b591-8be4-4729-b0bc-c00f11a75147" />
+<img width="1920" height="1080" alt="2026-02-27_13-57-56" src="https://github.com/user-attachments/assets/ebb2b591-8be4-4729-b0bc-c00f11a75147" />
+<img width="1920" height="1080" alt="2026-02-27_14-00-27" src="https://github.com/user-attachments/assets/927bf998-afe9-4cc4-82dc-d4b22039b1af" />
+<img width="1920" height="1080" alt="2026-02-27_14-00-27" src="https://github.com/user-attachments/assets/927bf998-afe9-4cc4-82dc-d4b22039b1af" />
 
-Общий вид галактики (или нашей системы)	Информация по клику
-![Скриншот 1][ВСТАВЬТЕ_ССЫЛКУ_НА_СКРИНШОТ_1]	![Скриншот 2][ВСТАВЬТЕ_ССЫЛКУ_НА_СКРИНШОТ_2]
+
