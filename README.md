@@ -45,3 +45,9 @@ pip install Pillow
 ```sun.png``` ,```mercury.png```, ```venus.png```, ```earth.png```, ```mars.png```, ```jupiter.png```, ```saturn.png```, ```uranus.png```, ```neptune.png```, ```pluto.png``` , ```moon.png```.
 
 Совет: Используйте изображения с прозрачным фоном, чтобы они красиво смотрелись на черном фоне космоса.
+4. Запустите симуляцию!
+
+```bash
+python sgshsh.py
+```
+(Не забудьте переименовать файл, если он у вас называется иначе)
