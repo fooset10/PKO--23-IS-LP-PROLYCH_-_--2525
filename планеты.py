@@ -24,7 +24,7 @@ PLANET_DATA = [
     {"name": "Нептун", "distance": 30.0, "radius": 11.00, "color": "blue", "period": 59800, "angle": 330},
 ]
 
-MOON_DATA = {"name": "Луна", "distance": 0.000000025, "radius": 6.00, "color": "white", "period": 27.3, "angle": 0}
+MOON_DATA = {"name": "Луна", "distance": 0.1, "radius": 9.00, "color": "white", "period": 27.3, "angle": 0}
 SUN_DATA = {"name": "Солнце", "radius": 12, "color": "yellow"}
 
 # Словарь с URL-адресами Википедии для каждого объекта
