@@ -31,3 +31,8 @@
     ```bash
     git clone https://github.com/yourusername/solar-system-simulation.git
     cd solar-system-simulation
+2. Установите зависимость (Pillow):
+Tkinter уже должен быть установлен вместе с Python. Устанавливаем только то, чего не хватает.
+
+bash
+pip install Pillow
