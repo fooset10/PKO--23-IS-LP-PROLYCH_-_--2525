@@ -1,1 +1,569 @@
+Импорты и константы
+python
+import tkinter as tk                    # Импорт основной библиотеки для GUI
+from tkinter import ttk                  # Импорт тематических виджетов tkinter
+import math                              # Математические функции (cos, sin, pi)
+from PIL import Image, ImageTk           # Работа с изображениями
+import os                                # Работа с файловой системой (проверка существования файлов)
+import webbrowser                         # Открытие ссылок в браузере
 
+# Константы для отображения
+SCALE = 150                              # Коэффициент масштабирования орбит (пикселей на а.е.)
+WIDTH = 1400                             # Ширина окна программы
+HEIGHT = 900                             # Высота окна программы
+CENTER_X = WIDTH // 2                     # Центр окна по X
+CENTER_Y = HEIGHT // 2                     # Центр окна по Y
+Данные планет
+python
+# Список словарей с данными планет
+PLANET_DATA = [
+    {"name": "Меркурий", "distance": 0.4, "radius": 11.00, "color": "gray", "period": 88, "angle": 0},
+    # name - название, distance - расстояние в а.е., radius - радиус, color - цвет, period - период обращения, angle - начальный угол
+    # ... остальные планеты
+]
+
+MOON_DATA = {"name": "Луна", "distance": 0.1, "radius": 9.00, "color": "white", "period": 27.3, "angle": 0}
+SUN_DATA = {"name": "Солнце", "radius": 12, "color": "yellow"}  # Данные Солнца
+
+# Словарь URL для Википедии
+WIKIPEDIA_URLS = {
+    "Солнце": "https://ru.wikipedia.org/wiki/Солнце",
+    # ... для каждого объекта
+}
+
+# Словарь описаний объектов
+OBJECT_DESCRIPTIONS = {
+    "Солнце": "Звезда, вокруг которой...",  # Текстовое описание для информационного окна
+    # ... описания всех объектов
+}
+Класс InfoWindow
+python
+class InfoWindow:
+    """Класс для создания информационного окна, привязанного к объекту"""
+    
+    def __init__(self, canvas, obj, x, y):
+        """Конструктор класса - вызывается при создании окна"""
+        self.canvas = canvas              # Сохраняем ссылку на холст для рисования
+        self.obj = obj                     # Сохраняем объект (планету/солнце)
+        self.x = x                          # Запоминаем координату X окна
+        self.y = y                          # Запоминаем координату Y окна
+        self.is_visible = True               # Флаг видимости окна
+        self.window_id = None                # ID прямоугольника окна на холсте
+        self.close_button_id = None          # ID кнопки закрытия
+        self.text_items = []                  # Список ID текстовых элементов
+        self.image_tk = None                  # Хранилище для изображения (чтобы не удалилось)
+        self.image_id = None                   # ID изображения на холсте
+        
+        self.create_window()                    # Вызываем метод создания окна
+
+    def create_window(self):
+        """Создает окно с информацией - все элементы интерфейса"""
+        window_x = self.x + 50                   # X позиция окна (справа от объекта)
+        window_y = self.y - 120                   # Y позиция окна (выше объекта)
+        window_width = 350                         # Ширина окна
+        window_height = 420                         # Высота окна
+        
+        # Создаем прямоугольник-фон окна
+        self.window_id = self.canvas.create_rectangle(
+            window_x, window_y,                    # Левый верхний угол
+            window_x + window_width, window_y + window_height,  # Правый нижний угол
+            fill="#2b2b2b", outline="yellow", width=2,  # Темно-серый фон, желтая рамка
+            tags="info_window"                      # Тег для группировки элементов
+        )
+        
+        # Создаем заголовок с именем объекта
+        self.canvas.create_text(
+            window_x + 20, window_y + 25,           # Позиция текста
+            text=f"{self.obj.name}",                 # Текст - имя объекта
+            fill="yellow", font=("Arial", 16, "bold"),  # Желтый цвет, жирный шрифт
+            anchor="w", tags="info_window"            # Выравнивание по левому краю
+        )
+        
+        # Попытка загрузить изображение объекта
+        circle_x = window_x + window_width // 2      # Центр по X для изображения
+        circle_y = window_y + 85                      # Центр по Y для изображения
+        circle_size = 90                               # Размер изображения
+        
+        # Проверяем различные варианты пути к изображению
+        img_path = None
+        possible_paths = [                            # Список возможных путей
+            f"IMAGES/{self.obj.name.upper()}.jpg",     # В папке IMAGES, заглавными
+            # ... другие варианты
+        ]
+        
+        # Ищем существующий файл изображения
+        for path in possible_paths:
+            if os.path.exists(path):                   # Если файл существует
+                img_path = path                         # Сохраняем путь
+                break                                    # Прерываем цикл
+        
+        if img_path and os.path.exists(img_path):       # Если изображение найдено
+            try:                                          # Пытаемся загрузить
+                pil_image = Image.open(img_path)         # Открываем изображение PIL
+                pil_image = pil_image.resize((circle_size, circle_size), Image.Resampling.LANCZOS)  # Изменяем размер
+                self.image_tk = ImageTk.PhotoImage(pil_image)  # Конвертируем для tkinter
+                
+                # Создаем изображение на холсте
+                self.image_id = self.canvas.create_image(
+                    circle_x, circle_y,                   # Позиция
+                    image=self.image_tk, tags="info_window"  # Изображение и тег
+                )
+                
+                # Рисуем рамку вокруг изображения
+                self.canvas.create_rectangle(
+                    circle_x - circle_size // 2 - 2,      # Левый верхний X
+                    circle_y - circle_size // 2 - 2,      # Левый верхний Y
+                    circle_x + circle_size // 2 + 2,      # Правый нижний X
+                    circle_y + circle_size // 2 + 2,      # Правый нижний Y
+                    outline="white", width=2, tags="info_window"  # Белая рамка
+                )
+            except Exception as e:                         # Если ошибка загрузки
+                print(f"Ошибка загрузки изображения {img_path}: {e}")
+                self.draw_fallback_circle(circle_x, circle_y, circle_size)  # Рисуем круг-заглушку
+        else:                                              # Если изображение не найдено
+            self.draw_fallback_circle(circle_x, circle_y, circle_size)  # Рисуем круг-заглушку
+        
+        # Добавляем описание объекта
+        desc_y = circle_y + circle_size // 2 + 25          # Y позиция описания
+        desc = OBJECT_DESCRIPTIONS.get(self.obj.name, "Описание отсутствует")  # Получаем описание
+        if len(desc) > 180:                                # Если описание слишком длинное
+            desc = desc[:180] + "..."                       # Обрезаем и добавляем многоточие
+        
+        # Создаем текст с описанием
+        self.canvas.create_text(
+            window_x + 20, desc_y,                         # Позиция
+            text=desc,                                      # Текст описания
+            fill="white", font=("Arial", 9),                # Белый цвет, маленький шрифт
+            anchor="nw", width=310, tags="info_window"      # Выравнивание по левому верхнему краю
+        )
+        
+        # Добавляем характеристики объекта
+        specs_y = desc_y + 80                               # Y позиция характеристик
+        
+        # Разделительная линия
+        self.canvas.create_line(
+            window_x + 20, specs_y - 10,                    # Начало линии
+            window_x + window_width - 20, specs_y - 10,     # Конец линии
+            fill="gray", width=1, tags="info_window"        # Серый цвет, тонкая линия
+        )
+        
+        # Формируем список характеристик в зависимости от типа объекта
+        if isinstance(self.obj, Sun):                        # Если объект - Солнце
+            specs = [                                         # Специфичные для Солнца характеристики
+                f"• Радиус: {SUN_DATA['radius']} земных радиусов",
+                f"• Температура: 5500°C",
+                f"• Возраст: 4.6 млрд лет"
+            ]
+        elif isinstance(self.obj, Planet):                    # Если объект - планета
+            planet_info = next((p for p in PLANET_DATA if p["name"] == self.obj.name), None)  # Ищем данные планеты
+            if planet_info:                                    # Если данные найдены
+                specs = [                                       # Характеристики планеты
+                    f"• Расстояние от Солнца: {planet_info['distance']} а.е.",
+                    f"• Радиус: {planet_info['radius']} земных",
+                    f"• Период обращения: {planet_info['period']} дней"
+                ]
+        elif isinstance(self.obj, Moon):                       # Если объект - Луна
+            specs = [                                           # Характеристики Луны
+                f"• Радиус: {MOON_DATA['radius']} земных",
+                f"• Период обращения: {MOON_DATA['period']} дней",
+                f"• Расстояние от Земли: 384 400 км"
+            ]
+        else:                                                   # Если тип не определен
+            specs = []                                           # Пустой список характеристик
+        
+        # Отображаем характеристики
+        for i, spec in enumerate(specs):                        # Для каждой характеристики
+            self.canvas.create_text(
+                window_x + 20, specs_y + i * 22,                 # Позиция (с отступом по Y)
+                text=spec,                                        # Текст характеристики
+                fill="lightblue", font=("Arial", 9),             # Голубой цвет
+                anchor="w", tags="info_window"                    # Выравнивание по левому краю
+            )
+        
+        # Кнопка "Подробнее"
+        self.canvas.create_rectangle(
+            window_x + 20, window_y + window_height - 45,        # Левый верхний угол
+            window_x + 130, window_y + window_height - 20,       # Правый нижний угол
+            fill="#4a4a4a", outline="yellow", width=1,           # Серый фон, желтая рамка
+            tags=("info_window", "more_btn")                      # Два тега
+        )
+        
+        # Текст на кнопке
+        self.canvas.create_text(
+            window_x + 75, window_y + window_height - 32,        # Позиция текста
+            text="📖 Подробнее",                                   # Текст с эмодзи
+            fill="white", font=("Arial", 9),                      # Белый цвет
+            tags=("info_window", "more_btn")                       # Два тега
+        )
+        
+        # Привязываем события к кнопке
+        self.canvas.tag_bind("more_btn", '<Button-1>',           # Клик левой кнопкой мыши
+                             lambda e: self.open_wikipedia())     # Вызов метода открытия Wikipedia
+        self.canvas.tag_bind("more_btn", '<Enter>',              # Наведение мыши
+                             lambda e: self.on_more_enter())     # Эффект при наведении
+        self.canvas.tag_bind("more_btn", '<Leave>',              # Убирание мыши
+                             lambda e: self.on_more_leave())     # Убираем эффект
+        
+        # Кнопка закрытия (крестик)
+        self.canvas.create_text(
+            window_x + window_width - 20, window_y + 20,         # Позиция в правом верхнем углу
+            text="✕", fill="red", font=("Arial", 16, "bold"),    # Красный крестик
+            tags=("info_window", "close_btn")                     # Два тега
+        )
+        
+        # Привязываем события к кнопке закрытия
+        self.canvas.tag_bind("close_btn", '<Button-1>',          # Клик по крестику
+                             lambda e: self.close())              # Вызов метода закрытия
+        self.canvas.tag_bind("close_btn", '<Enter>',             # Наведение
+                             lambda e: self.canvas.itemconfig("close_btn", fill="yellow"))  # Меняем цвет на желтый
+        self.canvas.tag_bind("close_btn", '<Leave>',             # Убирание
+                             lambda e: self.canvas.itemconfig("close_btn", fill="red"))     # Возвращаем красный
+
+    def draw_fallback_circle(self, x, y, size):
+        """Рисует круг-заглушку, если изображение не найдено"""
+        # Рисуем круг
+        self.canvas.create_oval(
+            x - size // 2, y - size // 2,                        # Левый верхний угол
+            x + size // 2, y + size // 2,                        # Правый нижний угол
+            fill=self.obj.color, outline="white", width=3,       # Цвет объекта, белая рамка
+            tags="info_window"
+        )
+        
+        # Добавляем символ в центр
+        if isinstance(self.obj, Sun):                             # Для Солнца
+            symbol = "☀️"                                          # Эмодзи солнца
+        elif isinstance(self.obj, Moon):                           # Для Луны
+            symbol = "🌙"                                          # Эмодзи луны
+        elif self.obj.name == "Земля":                             # Для Земли
+            symbol = "🌍"                                          # Эмодзи Земли
+        elif self.obj.name == "Марс":                              # Для Марса
+            symbol = "🔴"                                          # Красный круг
+        elif self.obj.name in ["Юпитер", "Сатурн"]:                # Для газовых гигантов
+            symbol = "🪐"                                          # Эмодзи планеты с кольцами
+        else:                                                      # Для остальных
+            symbol = self.obj.name[0]                               # Первая буква названия
+        
+        # Создаем текст с символом
+        self.canvas.create_text(
+            x, y,                                                  # Центр круга
+            text=symbol,                                           # Символ
+            fill="white", font=("Arial", 40),                      # Белый цвет, крупный шрифт
+            tags="info_window"
+        )
+
+    def on_more_enter(self):
+        """Эффект при наведении на кнопку 'Подробнее'"""
+        self.canvas.itemconfig("more_btn", fill="yellow")          # Меняем цвет текста на желтый
+
+    def on_more_leave(self):
+        """Эффект при убирании мыши с кнопки 'Подробнее'"""
+        self.canvas.itemconfig("more_btn", fill="white")           # Возвращаем белый цвет
+
+    def open_wikipedia(self):
+        """Открывает страницу Википедии"""
+        if self.obj.name in WIKIPEDIA_URLS:                        # Если URL существует
+            webbrowser.open(WIKIPEDIA_URLS[self.obj.name])         # Открываем в браузере
+
+    def close(self):
+        """Закрывает информационное окно"""
+        self.canvas.delete("info_window")                          # Удаляем все элементы с тегом
+        self.is_visible = False                                     # Помечаем окно как невидимое
+
+    def update_position(self, x, y):
+        """Обновляет позицию окна (если планета движется)"""
+        if not self.is_visible:                                     # Если окно не видимо
+            return                                                   # Выходим
+        
+        self.x = x                                                  # Обновляем координаты
+        self.y = y
+        
+        # Получаем текущие координаты окна
+        if self.window_id:                                          # Если окно существует
+            coords = self.canvas.coords(self.window_id)            # Получаем его координаты
+            if coords:                                              # Если координаты получены
+                # Вычисляем смещение
+                dx = (x + 50) - coords[0]                           # Смещение по X
+                dy = (y - 120) - coords[1]                          # Смещение по Y
+                
+                # Перемещаем все элементы окна
+                for item_id in self.canvas.find_withtag("info_window"):  # Для каждого элемента окна
+                    self.canvas.move(item_id, dx, dy)                    # Перемещаем
+Класс SolarObject (базовый класс)
+python
+class SolarObject:
+    def __init__(self, canvas, x, y, name, radius_earth, color, img_path=None):
+        self.canvas = canvas                    # Сохраняем ссылку на холст
+        self.name = name                         # Имя объекта
+        self.color = color                        # Цвет объекта
+        self.base_radius = max(3, radius_earth * 3)  # Базовый радиус в пикселях (минимум 3)
+        self.radius_px = self.base_radius          # Текущий радиус (с учетом масштаба)
+        self.x = x                                  # Текущая координата X
+        self.y = y                                  # Текущая координата Y
+        self.info_window = None                     # Информационное окно (пока не создано)
+        
+        self.image_tk = None                        # Для хранения изображения
+        self.image_id = None                         # ID изображения на холсте
+        
+        # Пытаемся загрузить изображение
+        if img_path and os.path.exists(img_path):   # Если путь указан и файл существует
+            try:                                     # Пытаемся загрузить
+                pil_image = Image.open(img_path)     # Открываем изображение
+                img_size = int(self.radius_px * 2)   # Размер изображения (диаметр)
+                pil_image = pil_image.resize((img_size, img_size), Image.Resampling.LANCZOS)  # Изменяем размер
+                self.image_tk = ImageTk.PhotoImage(pil_image)  # Конвертируем для tkinter
+                # Создаем изображение на холсте
+                self.image_id = self.canvas.create_image(x, y, image=self.image_tk, anchor='center', tags=self.name)
+            except Exception as e:                    # Если ошибка
+                print(f"Ошибка загрузки {img_path}: {e}. Рисуем круг.")
+                # Рисуем круг вместо изображения
+                self.image_id = self.canvas.create_oval(x - self.radius_px, y - self.radius_px,
+                                                        x + self.radius_px, y + self.radius_px,
+                                                        fill=self.color, outline="white", tags=self.name)
+        else:                                         # Если изображение не найдено
+            # Рисуем круг
+            self.image_id = self.canvas.create_oval(x - self.radius_px, y - self.radius_px,
+                                                    x + self.radius_px, y + self.radius_px,
+                                                    fill=self.color, outline="white", tags=self.name)
+
+    def set_zoom(self, zoom):
+        """Изменяет размер объекта при масштабировании"""
+        self.radius_px = max(2, self.base_radius * zoom)  # Новый радиус с учетом масштаба
+        if not self.image_tk:                             # Если используется круг (не изображение)
+            # Обновляем координаты круга
+            x1 = self.x - self.radius_px
+            y1 = self.y - self.radius_px
+            x2 = self.x + self.radius_px
+            y2 = self.y + self.radius_px
+            self.canvas.coords(self.image_id, x1, y1, x2, y2)
+
+    def move_to(self, x, y):
+        """Перемещает объект в новые координаты"""
+        self.x = x                                          # Обновляем координаты
+        self.y = y
+        if self.image_tk:                                   # Если используется изображение
+            self.canvas.coords(self.image_id, x, y)        # Перемещаем центр изображения
+        else:                                               # Если используется круг
+            # Перемещаем круг (обновляем координаты прямоугольника)
+            self.canvas.coords(self.image_id, x - self.radius_px, y - self.radius_px,
+                               x + self.radius_px, y + self.radius_px)
+        
+        # Если есть информационное окно и оно видимо
+        if self.info_window and self.info_window.is_visible:
+            self.info_window.update_position(x, y)          # Обновляем его позицию
+
+    def show_info(self):
+        """Показывает информационное окно рядом с объектом"""
+        # Закрываем предыдущее окно, если было открыто
+        if self.info_window:
+            self.info_window.close()                        # Закрываем старое окно
+        
+        # Создаем новое окно
+        self.info_window = InfoWindow(self.canvas, self, self.x, self.y)
+Класс Planet (наследует SolarObject)
+python
+class Planet(SolarObject):
+    def __init__(self, canvas, distance_au, data, img_path=None):
+        self.distance_au = distance_au                      # Расстояние от Солнца в а.е.
+        self.period = data["period"]                        # Период обращения в днях
+        self.angle = math.radians(data["angle"])            # Текущий угол в радианах
+        self.orbit_radius_base = distance_au * SCALE       # Базовый радиус орбиты в пикселях
+        super().__init__(canvas, CENTER_X, CENTER_Y, data["name"],  # Вызов конструктора родителя
+                         data["radius"], data["color"], img_path)
+        self.initial_angle = data["angle"]                  # Начальный угол для сброса
+        # Создаем текстовую метку с названием планеты
+        self.label_id = self.canvas.create_text(0, 0, text=data["name"],
+                                                fill="white", font=("Arial", 8),
+                                                tags=f"label_{data['name']}")
+
+    def update_position(self, time_mult, zoom, dt=0.05):
+        """Обновляет позицию планеты в зависимости от времени"""
+        # Вычисляем изменение угла: (2π / период) * время * множитель скорости
+        delta_angle = (2 * math.pi / self.period) * dt * time_mult
+        self.angle += delta_angle                           # Добавляем изменение к текущему углу
+        
+        # Вычисляем новые координаты
+        orbit_r = self.orbit_radius_base * zoom             # Текущий радиус орбиты с учетом масштаба
+        x = CENTER_X + orbit_r * math.cos(self.angle)       # X = центр + радиус * cos(угол)
+        y = CENTER_Y + orbit_r * math.sin(self.angle)       # Y = центр + радиус * sin(угол)
+        
+        self.move_to(x, y)                                   # Перемещаем планету
+        
+        # Обновляем позицию текстовой метки
+        self.canvas.coords(self.label_id, x - 15, y - self.radius_px - 5)
+
+    def set_zoom(self, zoom):
+        """Изменяет размер планеты при масштабировании"""
+        super().set_zoom(zoom)                              # Вызываем метод родителя
+Класс Moon (наследует SolarObject)
+python
+class Moon(SolarObject):
+    def __init__(self, canvas, parent_planet, distance_au, data, img_path=None):
+        self.parent = parent_planet                         # Родительская планета (Земля)
+        self.distance_au = distance_au                      # Расстояние от планеты в а.е.
+        self.period = data["period"]                         # Период обращения в днях
+        self.angle = math.radians(data["angle"])            # Текущий угол в радианах
+        self.base_orbit_radius = distance_au * SCALE       # Базовый радиус орбиты в пикселях
+        super().__init__(canvas, parent_planet.x, parent_planet.y, data["name"],  # Вызов конструктора родителя
+                         data["radius"], data["color"], img_path)
+        # Создаем текстовую метку
+        self.label_id = self.canvas.create_text(0, 0, text=data["name"],
+                                                fill="white", font=("Arial", 7),
+                                                tags=f"label_{data['name']}")
+
+    def update_position(self, time_mult, zoom, dt=0.05):
+        """Обновляет позицию Луны относительно Земли"""
+        # Вычисляем изменение угла
+        delta_angle = (2 * math.pi / self.period) * dt * time_mult
+        self.angle += delta_angle                           # Добавляем изменение
+        
+        # Вычисляем относительные координаты
+        orbit_r = self.base_orbit_radius * zoom             # Текущий радиус орбиты
+        rel_x = orbit_r * math.cos(self.angle)              # Относительный X
+        rel_y = orbit_r * math.sin(self.angle)              # Относительный Y
+        
+        # Абсолютные координаты = координаты Земли + относительные
+        abs_x = self.parent.x + rel_x
+        abs_y = self.parent.y + rel_y
+        
+        self.move_to(abs_x, abs_y)                          # Перемещаем Луну
+        
+        # Обновляем позицию метки
+        self.canvas.coords(self.label_id, abs_x - 10, abs_y - self.radius_px - 3)
+Класс Sun (наследует SolarObject)
+python
+class Sun(SolarObject):
+    def __init__(self, canvas, img_path=None):
+        super().__init__(canvas, CENTER_X, CENTER_Y, "Солнце",  # Вызов конструктора родителя
+                         SUN_DATA["radius"], SUN_DATA["color"], img_path)
+
+    def set_zoom(self, zoom):
+        """Изменяет размер Солнца при масштабировании"""
+        super().set_zoom(zoom)                              # Вызываем метод родителя
+        self.move_to(CENTER_X, CENTER_Y)                    # Солнце всегда в центре
+Класс SolarSystemApp (главный класс приложения)
+python
+class SolarSystemApp:
+    def __init__(self, root):
+        self.root = root                                    # Сохраняем главное окно
+        self.root.title("Симуляция Солнечной системы")      # Устанавливаем заголовок
+        self.root.geometry(f"{WIDTH}x{HEIGHT}")            # Устанавливаем размер окна
+        
+        self.playing = True                                 # Флаг анимации (вкл/выкл)
+        self.time_mult = 1.0                                # Множитель скорости
+        self.zoom = 1.0                                      # Масштаб
+        self.dt = 0.05                                       # Шаг времени
+        
+        # Создаем главный контейнер
+        main_container = ttk.Frame(root)                     # Фрейм для всех элементов
+        main_container.pack(fill=tk.BOTH, expand=True)       # Растягиваем на всё окно
+        
+        # Создаем Canvas для отображения планет
+        self.canvas = tk.Canvas(main_container, width=WIDTH, height=HEIGHT - 180, bg='black')
+        self.canvas.pack(fill=tk.BOTH, expand=True)          # Растягиваем с запасом для панелей
+        
+        # Создаем фрейм для панели с иконками
+        icon_frame = ttk.Frame(main_container)
+        icon_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=(0, 5))  # Внизу, по ширине
+        
+        # Создаем холст для иконок
+        self.icon_canvas = tk.Canvas(icon_frame, height=85, bg='#1a1a1a', highlightthickness=0)
+        self.icon_canvas.pack(fill=tk.X, padx=10)            # Растягиваем по ширине
+        
+        self.create_planet_icons()                           # Создаем иконки планет
+        
+        # Создаем фрейм для панели управления
+        control_frame = ttk.Frame(main_container)
+        control_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=5)  # Внизу, под иконками
+        
+        # Кнопки управления
+        ttk.Button(control_frame, text="▶", command=self.play, width=3).pack(side=tk.LEFT, padx=2)
+        ttk.Button(control_frame, text="⏸", command=self.pause, width=3).pack(side=tk.LEFT, padx=2)
+        ttk.Button(control_frame, text="↺", command=self.reset_angles, width=3).pack(side=tk.LEFT, padx=5)
+        
+        # Ползунок скорости
+        ttk.Label(control_frame, text="Скорость:").pack(side=tk.LEFT, padx=(20, 5))
+        self.time_scale = tk.Scale(control_frame, from_=0, to_=200, orient=tk.HORIZONTAL,
+                                   length=150, command=self.set_time_mult)
+        self.time_scale.set(20)                              # Начальное значение
+        self.time_scale.pack(side=tk.LEFT, padx=5)
+        
+        # Ползунок масштаба
+        ttk.Label(control_frame, text="Масштаб:").pack(side=tk.LEFT, padx=(20, 5))
+        self.zoom_scale = tk.Scale(control_frame, from_=0.2, to_=3.0, resolution=0.1,
+                                   orient=tk.HORIZONTAL, length=150, command=self.set_zoom)
+        self.zoom_scale.set(1.0)                             # Начальное значение
+        self.zoom_scale.pack(side=tk.LEFT, padx=5)
+        
+        # Кнопка сброса вида
+        ttk.Button(control_frame, text="Сброс вида", command=self.reset_view).pack(side=tk.LEFT, padx=20)
+        
+        self.create_objects()                                # Создаем объекты Солнечной системы
+        self.draw_orbits()                                   # Рисуем орбиты
+        self.bind_clicks()                                   # Привязываем обработчики кликов
+        self.animate()                                       # Запускаем анимацию
+
+    def create_planet_icons(self):
+        """Создает панель с иконками планет"""
+        self.planet_icons = []                               # Список для хранения информации об иконках
+        icon_size = 40                                        # Размер иконок
+        spacing = 90                                          # Расстояние между иконками
+        
+        # Добавляем текст "СОЛНЦЕ" слева
+        self.icon_canvas.create_text(40, 30, text="СОЛНЦЕ:",
+                                     fill="yellow", font=("Arial", 10, "bold"), anchor="w")
+        
+        # Добавляем Солнце
+        sun_x = 120
+        self.create_single_icon(sun_x, 42, "Солнце", "yellow", icon_size + 5)
+        
+        # Добавляем текст "ПЛАНЕТЫ:" с отступом
+        planet_text_x = sun_x + 80
+        self.icon_canvas.create_text(planet_text_x, 30, text="ПЛАНЕТЫ:",
+                                     fill="lightblue", font=("Arial", 10, "bold"), anchor="w")
+        
+        # Добавляем планеты
+        planet_start_x = planet_text_x + 80
+        for i, planet in enumerate(PLANET_DATA):
+            x = planet_start_x + i * spacing
+            color = planet["color"]
+            self.create_single_icon(x, 42, planet["name"], color, icon_size)
+        
+        # Добавляем текст "ЛУНА:" с отступом
+        moon_text_x = planet_start_x + len(PLANET_DATA) * spacing + 30
+        self.icon_canvas.create_text(moon_text_x, 30, text="ЛУНА:",
+                                     fill="white", font=("Arial", 10, "bold"), anchor="w")
+        
+        # Добавляем Луну
+        moon_x = moon_text_x + 60
+        self.create_single_icon(moon_x, 42, "Луна", "white", icon_size - 5)
+        
+        # Рисуем рамку вокруг иконок
+        self.icon_canvas.create_rectangle(10, 10, WIDTH - 20, 75, outline='#444444', width=2)
+
+    def create_single_icon(self, x, y, name, color, size):
+        """Создает одну иконку планеты"""
+        # Рисуем круг
+        icon_id = self.icon_canvas.create_oval(
+            x - size // 2, y - size // 2,                     # Левый верхний угол
+            x + size // 2, y + size // 2,                     # Правый нижний угол
+            fill=color, outline="white", width=2,             # Цвет, белая рамка
+            tags=f"icon_{name}"                                # Тег для идентификации
+        )
+        
+        # Добавляем название под иконкой
+        text_id = self.icon_canvas.create_text(
+            x, y + size // 2 + 12,                             # Под иконкой
+            text=name,                                         # Название
+            fill="white", font=("Arial", 8, "bold"),           # Белый цвет, жирный шрифт
+            tags=f"icon_text_{name}"                           # Тег для идентификации
+        )
+        
+        # Привязываем события
+        self.icon_canvas.tag_bind(f"icon_{name}", '<Enter>',   # Наведение на иконку
+                                  lambda e, n=name: self.on_icon_enter(n))
+        self.icon_canvas.tag_bind(f"icon_{name}", '<Leave>',   # Убирание с иконки
+                                  lambda e, n=name: self.on_icon_leave(n))
+        self.icon_canvas.tag_bind(f"icon_{name}", '<Button-1>', # Клик по иконке
+                                  lambda e, n=name: self.on_icon_click(n))
+        
+        # То же самое для текста
